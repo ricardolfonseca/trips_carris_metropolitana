@@ -1,0 +1,40 @@
+name: Fetch Carris Metropolitana Locations (Static)
+
+on:
+  workflow_dispatch:        # Manual trigger only (no schedule)
+
+jobs:
+  fetch-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install jq for JSON parsing
+        run: sudo apt-get install -y jq
+
+      - name: Fetch districts
+        run: |
+          curl -s https://api.carrismetropolitana.pt/v2/locations/districts | jq '.data' > districts.json
+
+      - name: Fetch municipalities
+        run: |
+          curl -s https://api.carrismetropolitana.pt/v2/locations/municipalities | jq '.data' > municipalities.json
+
+      - name: Fetch parishes
+        run: |
+          curl -s https://api.carrismetropolitana.pt/v2/locations/parishes | jq '.data' > parishes.json
+
+      - name: Fetch localities
+        run: |
+          curl -s https://api.carrismetropolitana.pt/v2/locations/localities | jq '.data' > localities.json
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Upload all location files to Volume
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks fs cp --overwrite districts.json "dbfs:/Volumes/trips_carris_metropolitana/bronze/locations/districts.json"
+          databricks fs cp --overwrite municipalities.json "dbfs:/Volumes/trips_carris_metropolitana/bronze/locations/municipalities.json"
+          databricks fs cp --overwrite parishes.json "dbfs:/Volumes/trips_carris_metropolitana/bronze/locations/parishes.json"
+          databricks fs cp --overwrite localities.json "dbfs:/Volumes/trips_carris_metropolitana/bronze/locations/localities.json"
