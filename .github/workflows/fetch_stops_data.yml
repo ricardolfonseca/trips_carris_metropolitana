@@ -2,7 +2,7 @@ name: Fetch Carris Metropolitana Stops
 
 on:
   schedule:
-    - cron: '0 17 * * *' 
+    - cron: '0 8 * * *' 
   workflow_dispatch:        # Allows manual trigger from GitHub UI
 
 jobs:
