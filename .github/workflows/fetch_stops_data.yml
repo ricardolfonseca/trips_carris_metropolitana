@@ -20,4 +20,4 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          databricks fs cp --overwrite stops.json "dbfs:/Volumes/trips_carris_metropolitana/data/source/stops.json"
+          databricks fs cp --overwrite stops.json "dbfs:/Volumes/trips_carris_metropolitana/data/source/stops/stops.json"
