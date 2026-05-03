@@ -12,15 +12,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug - list repository contents
+      - name: Verify script exists and is readable
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Files in root:"
-          ls -la
-          echo "Files in scripts/ (if exists):"
-          ls -la scripts/ || echo "scripts/ folder not found"
-          echo "Find any .py files:"
-          find . -name "*.py" -type f
+          ls -la scripts/fetch_arrivals_daily.py
+          file scripts/fetch_arrivals_daily.py
+          head -5 scripts/fetch_arrivals_daily.py
+          python -c "import os; print('File exists:', os.path.exists('scripts/fetch_arrivals_daily.py'))"
+      
+      - name: Run fetch script
+        run: python scripts/fetch_arrivals_daily.py
+        env:
+          parish_id: 151006
 
       - name: Setup Python
         uses: actions/setup-python@v5
