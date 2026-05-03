@@ -4,20 +4,13 @@ import json
 from datetime import datetime, timedelta
 
 def main():
-    # Read parish_id from environment variable (set in GitHub workflow)
-    parish_id = os.getenv("parish_id")
-    if not parish_id:
-        raise ValueError("parish_id environment variable not set. Check your workflow YAML.")
-
-    parish_id = str(parish_id)
-
-    # 1. Fetch all stops from the API
+    parish_id = os.getenv("parish_id", "151006")  # string
     print("Fetching stops from API...")
     response = requests.get("https://api.carrismetropolitana.pt/v2/stops")
     response.raise_for_status()
     all_stops = response.json()
 
-    # Filter active stops belonging to the given parish_id
+    # Filter active stops where parish_id matches (as string)
     filtered_stops = [
         stop for stop in all_stops
         if str(stop.get("parish_id")) == parish_id and stop.get("operational_status") == "active"
@@ -26,10 +19,10 @@ def main():
     print(f"Found {len(stop_ids)} active stops for parish_id {parish_id}")
 
     if not stop_ids:
-        print("No stops found. Please check parish_id.")
+        print("No stops found. Exiting.")
         return
 
-    # 2. For each stop, fetch arrivals for the previous day
+    # Fetch arrivals for previous day
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     arrivals_by_stop = {}
 
@@ -39,27 +32,27 @@ def main():
             resp = requests.get(url, timeout=30)
             if resp.status_code == 200:
                 data = resp.json()
-                if data:  # non-empty response
+                if data:
                     arrivals_by_stop[stop_id] = data
                 print(f"Stop {stop_id}: {len(data)} arrivals")
             else:
-                print(f"Stop {stop_id} returned error {resp.status_code}")
+                print(f"Stop {stop_id} -> HTTP {resp.status_code}")
         except Exception as e:
-            print(f"Error accessing stop {stop_id}: {e}")
+            print(f"Error on stop {stop_id}: {e}")
 
-    # 3. Save results to a single JSON file
+    # Save output (overwrites previous day's file)
     output_data = {
         "extraction_date": yesterday,
-        "parish_id": int(parish_id),
+        "parish_id": parish_id,
         "arrivals": arrivals_by_stop
     }
 
     os.makedirs("data", exist_ok=True)
-    output_file = "data/arrivals_fernão_ferro.json"
+    output_file = "data/arrivals_fernao_ferro.json"
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
 
-    print(f"Data saved to {output_file} | Stops processed: {len(arrivals_by_stop)}")
+    print(f"Saved to {output_file} | Stops with arrivals: {len(arrivals_by_stop)}")
 
 if __name__ == "__main__":
     main()
