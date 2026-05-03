@@ -1,0 +1,38 @@
+name: Fetch Daily Arrivals (Fernão Ferro)
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 1h UTC
+  workflow_dispatch:
+
+jobs:
+  fetch-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run fetch script
+        run: python scripts/fetch_arrivals_daily.py
+        env:
+          parish_id: "151006"
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Upload to Databricks Volume (overwrite)
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks fs cp --overwrite \
+            "data/arrivals_fernao_ferro.json" \
+            "dbfs:/Volumes/trips_carris_metropolitana/bronze/arrivals/arrivals_fernao_ferro.json"
